@@ -45,7 +45,7 @@ def is_safe(report:list[int]) -> bool:
 
 def main():
     levels:list[list[int]] = []
-    with open("2/day2.input", "r") as file:
+    with open("day2.input", "r") as file:
         for line in file:
             temp = line.split()
             temp = [int(x) for x in temp]

@@ -8,7 +8,7 @@ DONT = re.compile(r"don't\(\)")
 
 COMPLETE = re.compile(r"mul\(\d{1,3},\d{1,3}\)|do\(\)|don't\(\)")
 def main():
-    with open("3/day3.input", "r") as file:
+    with open("day3.input", "r") as file:
         text = file.read()
 
     # Part 1
