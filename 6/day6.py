@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 
-import operator
+from itertools import cycle
+import copy
+import cProfile
 
 UP_VECTOR = (-1, 0)
 DOWN_VECTOR = (1, 0)
@@ -12,10 +14,6 @@ starting_pos = (0, 0)
 patrol_map = []
 patrol_rows = 0
 patrol_cols = 0
-
-from itertools import cycle
-import copy
-import cProfile
 
 def mark_spot(map, location, char = "X"):
     row, col = location
