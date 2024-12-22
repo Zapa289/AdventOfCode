@@ -17,6 +17,37 @@ KEYPAD = [["X", "^", "A"],
           ["<", "v", ">"]]
 KEYPAD_DEFAULT = (0, 2)
 KEYPAD_DEADZONE = (0,0)
+KEYPAD_MAP = {'<': {'<': 'A',
+                   '>': '>>A',
+                   'A': '>>^A',
+                   '^': '>^A',
+                   'v': '>A'
+                   },
+             '>': {'<': '<<A',
+                   '>': 'A',
+                   'A': '^A',
+                   '^': '^<A',
+                   'v': '<A'
+                   },
+             'A': {'<': 'v<<A',
+                   '>': 'vA',
+                   'A': 'A',
+                   '^': '<A',
+                   'v': 'v<A'
+                   },
+             '^': {'<': 'v<A',
+                   '>': '>vA',
+                   'A': '>A',
+                   '^': 'A',
+                   'v': 'vA'
+                   },
+             'v': {'<': '<A',
+                   '>': '>A',
+                   'A': '^>A',
+                   '^': '^A',
+                   'v': 'A'
+                   }
+            }
 
 MOVEMENTS = {
     (0,1) : ">",
@@ -35,54 +66,42 @@ def main():
 
     # Create relational map for numpad
     numpad_map = create_movement_map(NUMBER_PAD, NUMBER_PAD_DEADZONE)
+    # pprint.pprint(numpad_map)
 
-    # Create relational map for keypad
-    keypad_map = create_movement_map(KEYPAD, KEYPAD_DEADZONE)
-    keypad_map['A']["<"].remove("<v<A")
-    keypad_map['<']['A'].remove(">^>A")
+    # # Create relational map for keypad
+    # keypad_map = create_movement_map(KEYPAD, KEYPAD_DEADZONE)
+    # keypad_map['A']["<"].remove("<v<A")
+    # keypad_map['<']['A'].remove(">^>A")
     # pprint.pprint(keypad_map)
 
-    def keypad_translation(sequence_list, memo):
-        bot_sequence = []
+    def keypad_translation(sequence, memo) -> str:
+        bot_sequence = ""
         bot_position = "A"
-        for sequence in sequence_list:
 
-            sub_sequences = [""]
-            for digit in sequence:
-                sub_sequences = [x + y for x in sub_sequences for y in keypad_map[bot_position][digit]]
-                # memo[(digit, bot_position)] = sub_sequences
-                bot_position = digit
-
-            bot_sequence.extend(sub_sequences)
-
-        #minimum = min(map(len, bot_sequence))
+        for digit in sequence:
+            bot_sequence = bot_sequence + KEYPAD_MAP[bot_position][digit]
+            bot_position = digit
         return bot_sequence
-        #return [x for x in bot_sequence if len(x) == minimum]
 
-    for key, values in keypad_map.items():
-        for to_key, to_paths in values.items():
-            if len(to_paths) == 1:
-                continue
-            size = []
-            for path in to_paths:
-                temp = [path]
-                temp = keypad_translation(temp, None)
-                print(f"{key} -> {to_key}: {path} = {temp}, {list(map(len, temp))}")
-                size.append(min(list(map(len, temp))))
+    def slim_down(pad:dict):
+        for key, values in pad.items():
+            for to_key, to_paths in values.items():
+                if len(to_paths) == 1:
+                    pad[key][to_key] = pad[key][to_key][0]
+                    continue
+                size = []
+                for path in to_paths:
+                    temp = path
+                    for _ in range(2):
+                        temp = keypad_translation(temp, None)
+                    # print(f"{key} -> {to_key}: {path} = {temp}, {len(temp)}")
+                    size.append(len(temp))
 
-            print(size)
-            minimum = min(size)
-            for index in range(len(size)):
-                if size[index] > minimum:
-                    keypad_map[key][to_key].pop(index)
+                min_index = size.index(min(size))
+                pad[key][to_key] = pad[key][to_key][min_index]
 
-            if len(keypad_map[key][to_key]) > 1:
-                keypad_map[key][to_key].pop()
-
-            # keypad_map[key][to_key] = keypad_map[key][to_key][0]
-
-    pprint.pprint(keypad_map)
-    # quit()
+    slim_down(numpad_map)
+    # pprint.pprint(numpad_map)
 
     print(f"Init time: {time.time() - st}s\n")
     st = time.time()
@@ -92,17 +111,17 @@ def main():
     memo = dict()
 
     for command in commands:
-        numpad_sequences = [""]
+        numpad_sequences = ""
         for digit in command:
-            numpad_sequences = [ x + y for x in numpad_sequences for y in numpad_map[numpad_bot][digit]]
+            numpad_sequences = numpad_sequences + numpad_map[numpad_bot][digit]
             numpad_bot = digit
 
         bot_sequences = numpad_sequences
         for _ in range(2):
             bot_sequences = keypad_translation(bot_sequences, memo)
 
-        minimum = min(map(len, bot_sequences))
-        print(minimum * int(command.strip("A")))
+        minimum = len(bot_sequences)
+        print(minimum)
         complexity.append(minimum * int(command.strip("A")))
 
     print(f"Part 1: Complexity = {sum(complexity)}")
