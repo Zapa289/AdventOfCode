@@ -66,76 +66,18 @@ def main():
 
     # Create relational map for numpad
     numpad_map = create_movement_map(NUMBER_PAD, NUMBER_PAD_DEADZONE)
-    # pprint.pprint(numpad_map)
 
-    # # Create relational map for keypad
+    # Create relational map for keypad
     keypad_map = create_movement_map(KEYPAD, KEYPAD_DEADZONE)
-    # keypad_map['A']["<"].remove("<v<A")
-    # keypad_map['<']['A'].remove(">^>A")
-    # pprint.pprint(keypad_map)
-
-
-    def slim_down(pad:dict):
-        for key, values in pad.items():
-            for to_key, to_paths in values.items():
-                if len(to_paths) == 1:
-                    pad[key][to_key] = pad[key][to_key][0]
-                    continue
-
-                size = []
-                for path in to_paths:
-                    temp = path
-                    for _ in range(10):
-                        temp = keypad_translation(temp)
-                    # print(f"{key} -> {to_key}: {path} = {temp}, {len(temp)}")
-                    size.append(len(temp))
-
-                min_index = size.index(min(size))
-                pad[key][to_key] = pad[key][to_key][min_index]
-
-    slim_down(numpad_map)
-    # pprint.pprint(numpad_map)
 
     print(f"Init time: {time.time() - st}s\n")
+
     st = time.time()
-
-    numpad_bot = "A"
-    complexity = []
-    memo = dict()
-
-    for command in commands:
-        numpad_sequences = ""
-        for digit in command:
-            numpad_sequences = numpad_sequences + numpad_map[numpad_bot][digit]
-            numpad_bot = digit
-
-        bot_sequences = numpad_sequences
-        for _ in range(2):
-            bot_sequences = keypad_translation(bot_sequences)
-
-        minimum = len(bot_sequences)
-        complexity.append(minimum * int(command.strip("A")))
-
-    print(f"Part 1: Complexity = {sum(complexity)}")
+    print(f"Part 1: Complexity = {find_complexity(commands, numpad_map, keypad_map, 3)}")
     print(f"Time: {time.time() - st}s\n")
 
     st = time.time()
-    numpad_map = create_movement_map(NUMBER_PAD, NUMBER_PAD_DEADZONE)
-    complexity = []
-    for command in commands:
-        numpad_sequences = [""]
-
-        for digit in command:
-            sub_sequences = []
-            for sequence in numpad_sequences:
-                sub_sequences.extend([sequence + x for x in numpad_map[numpad_bot][digit]])
-            numpad_bot = digit
-            numpad_sequences = sub_sequences
-
-        length = min([keypad_expansion(x, 25, memo, keypad_map) for x in numpad_sequences])
-        complexity.append(length * int(command.strip("A")))
-
-    print(f"Part 2: Complexity = {sum(complexity)}")
+    print(f"Part 2: Complexity = {find_complexity(commands, numpad_map, keypad_map, 26)}")
     print(f"Time: {time.time() - st}s\n")
 
 def keypad_expansion(sequence, depth, memo, keypad_map) -> int:
@@ -155,14 +97,25 @@ def keypad_expansion(sequence, depth, memo, keypad_map) -> int:
     memo[(sequence, depth)] = length
     return length
 
-def keypad_translation(sequence) -> str:
-    bot_sequence = ""
-    bot_position = "A"
+def find_complexity(commands, numpad_map, keypad_map, depth):
+    numpad_bot = "A"
+    complexity = []
+    memo = dict()
 
-    for digit in sequence:
-        bot_sequence = bot_sequence + KEYPAD_MAP[bot_position][digit]
-        bot_position = digit
-    return bot_sequence
+    for command in commands:
+        numpad_sequences = [""]
+
+        for digit in command:
+            sub_sequences = []
+            for sequence in numpad_sequences:
+                sub_sequences.extend([sequence + x for x in numpad_map[numpad_bot][digit]])
+            numpad_bot = digit
+            numpad_sequences = sub_sequences
+
+        length = min([keypad_expansion(x, depth - 1, memo, keypad_map) for x in numpad_sequences])
+        complexity.append(length * int(command.strip("A")))
+
+    return sum(complexity)
 
 def create_movement_map(pad, deadzone):
 
